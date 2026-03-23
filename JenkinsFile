@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "password-app"
+        CONTAINER_NAME = "password-container"
+        PORT = "3000"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch:"main" , url:"https://github.com/Aayusharya17/Password-Generator.git"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh '''
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+                '''
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh '''
+                docker run -d -p $PORT:3000 --name $CONTAINER_NAME $IMAGE_NAME
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'App deployed successfully!'
+        }
+        failure {
+            echo 'pipeline failed!'
+        }
+    }
+}
